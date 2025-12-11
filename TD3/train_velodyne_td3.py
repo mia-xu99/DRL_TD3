@@ -11,6 +11,12 @@ from torch.utils.tensorboard import SummaryWriter
 from replay_buffer import ReplayBuffer
 from velodyne_env import GazeboEnv
 
+# PyTorch 2.x 优化：启用编译加速（Linux 推荐）
+try:
+    torch._C._jit_set_profiling_mode(False)
+except Exception:
+    pass
+
 
 def evaluate(network, epoch, eval_episodes=10):
     avg_reward = 0.0
@@ -70,19 +76,15 @@ class Critic(nn.Module):
 
     def forward(self, s, a):
         s1 = F.relu(self.layer_1(s))
-        self.layer_2_s(s1)
-        self.layer_2_a(a)
-        s11 = torch.mm(s1, self.layer_2_s.weight.data.t())
-        s12 = torch.mm(a, self.layer_2_a.weight.data.t())
-        s1 = F.relu(s11 + s12 + self.layer_2_a.bias.data)
+        s11 = self.layer_2_s(s1)
+        s12 = self.layer_2_a(a)
+        s1 = F.relu(s11 + s12)
         q1 = self.layer_3(s1)
 
         s2 = F.relu(self.layer_4(s))
-        self.layer_5_s(s2)
-        self.layer_5_a(a)
-        s21 = torch.mm(s2, self.layer_5_s.weight.data.t())
-        s22 = torch.mm(a, self.layer_5_a.weight.data.t())
-        s2 = F.relu(s21 + s22 + self.layer_5_a.bias.data)
+        s21 = self.layer_5_s(s2)
+        s22 = self.layer_5_a(a)
+        s2 = F.relu(s21 + s22)
         q2 = self.layer_6(s2)
         return q1, q2
 
@@ -108,8 +110,9 @@ class TD3(object):
 
     def get_action(self, state):
         # Function to get the action from the actor
-        state = torch.Tensor(state.reshape(1, -1)).to(device)
-        return self.actor(state).cpu().data.numpy().flatten()
+        state = torch.tensor(state.reshape(1, -1), dtype=torch.float32).to(device)
+        with torch.no_grad():
+            return self.actor(state).cpu().detach().numpy().flatten()
 
     # training cycle
     def train(
@@ -135,17 +138,17 @@ class TD3(object):
                 batch_dones,
                 batch_next_states,
             ) = replay_buffer.sample_batch(batch_size)
-            state = torch.Tensor(batch_states).to(device)
-            next_state = torch.Tensor(batch_next_states).to(device)
-            action = torch.Tensor(batch_actions).to(device)
-            reward = torch.Tensor(batch_rewards).to(device)
-            done = torch.Tensor(batch_dones).to(device)
+            state = torch.tensor(batch_states, dtype=torch.float32).to(device)
+            next_state = torch.tensor(batch_next_states, dtype=torch.float32).to(device)
+            action = torch.tensor(batch_actions, dtype=torch.float32).to(device)
+            reward = torch.tensor(batch_rewards, dtype=torch.float32).to(device)
+            done = torch.tensor(batch_dones, dtype=torch.float32).to(device)
 
             # Obtain the estimated action from the next state by using the actor-target
             next_action = self.actor_target(next_state)
 
             # Add noise to the action
-            noise = torch.Tensor(batch_actions).data.normal_(0, policy_noise).to(device)
+            noise = torch.randn_like(action).normal_(0, policy_noise).to(device)
             noise = noise.clamp(-noise_clip, noise_clip)
             next_action = (next_action + noise).clamp(-self.max_action, self.max_action)
 
@@ -209,10 +212,10 @@ class TD3(object):
 
     def load(self, filename, directory):
         self.actor.load_state_dict(
-            torch.load("%s/%s_actor.pth" % (directory, filename))
+            torch.load("%s/%s_actor.pth" % (directory, filename), weights_only=False, map_location=device)
         )
         self.critic.load_state_dict(
-            torch.load("%s/%s_critic.pth" % (directory, filename))
+            torch.load("%s/%s_critic.pth" % (directory, filename), weights_only=False, map_location=device)
         )
 
 
@@ -234,7 +237,7 @@ tau = 0.005  # Soft target update variable (should be close to 0)
 policy_noise = 0.2  # Added noise for exploration
 noise_clip = 0.5  # Maximum clamping values of the noise
 policy_freq = 2  # Frequency of Actor network updates
-buffer_size = 1e6  # Maximum size of the buffer
+buffer_size = int(1e6)  # Maximum size of the buffer
 file_name = "TD3_velodyne"  # name of the file to store the policy
 save_model = True  # Weather to save the model or not
 load_model = False  # Weather to load a stored model
@@ -250,7 +253,8 @@ if save_model and not os.path.exists("./pytorch_models"):
 environment_dim = 20
 robot_dim = 4
 env = GazeboEnv("multi_robot_scenario.launch", environment_dim)
-time.sleep(5)
+print("Waiting for Gazebo and ROS nodes to fully initialize...")
+time.sleep(10)  # Increased wait time for ROS topics to become available
 torch.manual_seed(seed)
 np.random.seed(seed)
 state_dim = environment_dim + robot_dim
@@ -264,9 +268,9 @@ replay_buffer = ReplayBuffer(buffer_size, seed)
 if load_model:
     try:
         network.load(file_name, "./pytorch_models")
-    except:
+    except Exception as e:
         print(
-            "Could not load the stored model parameters, initializing training with random parameters"
+            f"Could not load the stored model parameters, initializing training with random parameters. Error: {e}"
         )
 
 # Create evaluation data store

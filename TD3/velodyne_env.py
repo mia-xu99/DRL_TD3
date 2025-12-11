@@ -129,6 +129,17 @@ class GazeboEnv:
         self.odom = rospy.Subscriber(
             "/r1/odom", Odometry, self.odom_callback, queue_size=1
         )
+        
+        # Wait for initial odometry and velodyne data
+        print("Waiting for ROS topics...")
+        timeout = time.time() + 10  # 10 second timeout
+        while (self.last_odom is None or np.all(self.velodyne_data == 10)) and time.time() < timeout:
+            time.sleep(0.1)
+        
+        if self.last_odom is None:
+            print("Warning: Odometry data not received within timeout period")
+        if np.all(self.velodyne_data == 10):
+            print("Warning: Velodyne data not received within timeout period")
 
     # Read velodyne pointcloud and turn it into distance data, then select the minimum value for each angle
     # range as state representation
@@ -183,6 +194,14 @@ class GazeboEnv:
         v_state = []
         v_state[:] = self.velodyne_data[:]
         laser_state = [v_state]
+
+        # Wait for odometry data to be available
+        timeout = time.time() + 5  # 5 second timeout
+        while self.last_odom is None and time.time() < timeout:
+            time.sleep(0.01)
+        
+        if self.last_odom is None:
+            raise RuntimeError("Odometry data not received within timeout period")
 
         # Calculate robot heading from odometry data
         self.odom_x = self.last_odom.pose.pose.position.x
@@ -283,6 +302,15 @@ class GazeboEnv:
             self.pause()
         except (rospy.ServiceException) as e:
             print("/gazebo/pause_physics service call failed")
+        
+        # Wait for odometry data to be available
+        timeout = time.time() + 5  # 5 second timeout
+        while self.last_odom is None and time.time() < timeout:
+            time.sleep(0.01)
+        
+        if self.last_odom is None:
+            raise RuntimeError("Odometry data not received within timeout period")
+        
         v_state = []
         v_state[:] = self.velodyne_data[:]
         laser_state = [v_state]
