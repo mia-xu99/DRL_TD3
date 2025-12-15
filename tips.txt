@@ -5,10 +5,18 @@ export GAZEBO_RESOURCE_PATH=~/DRL-robot-navigation/catkin_ws/src/multi_robot_sce
 source ~/.bashrc 
 cd ~/DRL-robot-navigation/catkin_ws 
 source devel_isolated/setup.bash
+cd ../TD3
+conda activate rlgpu
+python t
 
+cd ~/DRL-robot-navigation/TD3
+conda activate rlgpu
 tensorboard --logdir runs
 
 killall -9 rosout roslaunch rosmaster gzserver nodelet robot_state_publisher gzclient python python3
+
+cd ~/DRL-robot-navigation/TD3
+python t
 
 git add .
 git commit -m "修改描述"

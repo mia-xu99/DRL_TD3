@@ -43,6 +43,8 @@ def evaluate(network, epoch, eval_episodes=10):
         raw_state = env.reset()
         state = process_state(raw_state) # <--- 加入归一化
         done = False
+        episode_collision = False 
+
         while not done and count < 501:
             action = network.get_action(np.array(state))
             a_in = [(action[0] + 1) / 2, action[1]]
@@ -50,8 +52,12 @@ def evaluate(network, epoch, eval_episodes=10):
             state = process_state(raw_state) # <--- 加入归一化
             avg_reward += reward
             count += 1
+            # --- 只要发生过一次小于 -90，就标记为碰撞 ---
             if reward < -90:
-                col += 1
+                episode_collision = True
+        # --- 每一局结束后，只计一次数 ---
+        if episode_collision:
+            col += 1
     avg_reward /= eval_episodes
     avg_col = col / eval_episodes
     print("..............................................")
@@ -255,9 +261,10 @@ policy_noise = 0.2
 noise_clip = 0.5
 policy_freq = 2
 buffer_size = int(1e6)
-file_name = "TD3_velodyne"
+# file_name = "TD3_velodyne"
+file_name = "TD3_velodyne_best"
 save_model = True
-load_model = False
+load_model = True
 random_near_obstacle = True
 
 if not os.path.exists("./results"):
@@ -296,6 +303,9 @@ epoch = 1
 count_rand_actions = 0
 random_action = []
 
+# 初始化 best_avg_reward 为负无穷
+best_avg_reward = -np.inf 
+
 # ==========================================
 # 训练循环
 # ==========================================
@@ -317,10 +327,27 @@ while timestep < max_timesteps:
         if timesteps_since_eval >= eval_freq:
             print("Validating")
             timesteps_since_eval %= eval_freq
-            evaluations.append(
-                evaluate(network=network, epoch=epoch, eval_episodes=eval_ep)
-            )
+
+            # 1. 获取当前评估的平均分
+            # 注意：evaluate 函数必须有返回值 return avg_reward
+            avg_reward = evaluate(network=network, epoch=epoch, eval_episodes=eval_ep)
+            evaluations.append(avg_reward)
+            # 2. 保存“最新”模型 (覆盖旧的，用于断点续传)
+            # 文件名例如: TD3_velodyne_actor.pth
             network.save(file_name, directory="./pytorch_models")
+            # 3. 保存“最优”模型 (!!! 核心修改 !!!)
+            # 如果当前分数比历史最高分还高，就额外存一份带 _best 后缀的文件
+            if avg_reward > best_avg_reward:
+                best_avg_reward = avg_reward
+                print(f"🌟 New Best Model Found! Reward: {best_avg_reward:.2f} Saving...")
+                
+                # 保存为 TD3_velodyne_best_actor.pth
+                network.save(file_name + "_best", directory="./pytorch_models")
+            
+            # 4. (可选) 每 50 或 100 个 Epoch 强制备份一次
+            if epoch % 10 == 0:
+                network.save(f"{file_name}_epoch_{epoch}", directory="./pytorch_models")
+
             np.save("./results/%s" % (file_name), evaluations)
             epoch += 1
 

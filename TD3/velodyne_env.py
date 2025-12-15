@@ -244,10 +244,25 @@ class GazeboEnv:
         if distance < GOAL_REACHED_DIST:
             target = True
             done = True
+        
+        # 在 step 函数中 (大约第 230 行附近)
+
+        # ... (计算出 distance 之后) ...
+
+        # 1. 计算距离引导 (Distance Guidance)
+        if not hasattr(self, 'last_distance'):
+            self.last_distance = distance
+
+        # distance_rate > 0 代表靠近目标，< 0 代表远离目标
+        distance_rate = self.last_distance - distance 
+        self.last_distance = distance  # 更新 last_distance 供下一步使用
+
+        # 2. 将 distance_rate 传给 get_reward
+        reward = self.get_reward(target, collision, action, min_laser, distance_rate)
 
         robot_state = [distance, theta, action[0], action[1]]
         state = np.append(laser_state, robot_state)
-        reward = self.get_reward(target, collision, action, min_laser)
+        # reward = self.get_reward(target, collision, action, min_laser)
         return state, reward, done, target
 
     def reset(self):
@@ -458,12 +473,88 @@ class GazeboEnv:
             return True, True, min_laser
         return False, False, min_laser
 
+    # @staticmethod
+    # def get_reward(target, collision, action, min_laser):
+    #     if target:
+    #         return 100.0
+    #     elif collision:
+    #         return -100.0
+    #     else:
+    #         r3 = lambda x: 1 - x if x < 1 else 0.0
+    #         return action[0] / 2 - abs(action[1]) / 2 - r3(min_laser) / 2
+    
+    # @staticmethod
+    # # 记得把 distance_rate 加到参数里
+    # def get_reward(target, collision, action, min_laser, distance_rate):
+    #     if target:
+    #         return 100.0
+    #     elif collision:
+    #         return -100.0
+    #     else:
+    #         r3 = lambda x: 1 - x if x < 1 else 0.0
+            
+    #         # --- 核心修改 ---
+            
+    #         # 1. 距离奖励 (最重要!)
+    #         # 只要靠近目标，就给正反馈。系数建议 100~200。
+    #         # 假设一步走 0.1米，这里能得 +10分。
+    #         r_distance = 100.0 * distance_rate
+            
+    #         # 2. 避障惩罚 (加大)
+    #         # 离墙越近扣分越狠，防止它为了贪距离分而贴脸走
+    #         r_obstacle = -2.0 * r3(min_laser)
+            
+    #         # 3. 动作奖励 (削弱或移除)
+    #         # 原来的 action[0]/2 会导致它为了分而瞎跑。
+    #         # 我们只保留微小的惩罚，或者只奖励一点点速度，但必须基于“方向正确”的前提。
+    #         # 这里建议直接移除单纯的速度奖励，或者给个很小的常数扣分(时间惩罚)
+    #         # 强迫它为了拿距离分而动起来。
+    #         r_step = -0.05  # 每走一步扣一点点，逼它快点到终点
+
+            
+    #         return r_distance + r_obstacle + r_step
+
     @staticmethod
-    def get_reward(target, collision, action, min_laser):
+    def get_reward(target, collision, action, min_laser, distance_rate):
         if target:
+            # 到达目标，给大奖
             return 100.0
         elif collision:
+            # 撞墙，给大惩罚
             return -100.0
         else:
-            r3 = lambda x: 1 - x if x < 1 else 0.0
-            return action[0] / 2 - abs(action[1]) / 2 - r3(min_laser) / 2
+            # -----------------------------------------------------------
+            # 根据 circuit.world 文件分析调整后的参数
+            # 最窄处路宽约 0.67米，半宽 0.33米。
+            # 因此 safe_distance 必须小于 0.33米，否则机器人无法通过。
+            # -----------------------------------------------------------
+            
+            # 1. 距离奖励 (Distance Reward)
+            # 保持足够的诱惑力，让它想往前走
+            r_distance = 40.0 * distance_rate
+            
+            # 2. 避障惩罚 (Obstacle Penalty) - 核心修改
+            # 设定安全阈值为 0.30米 (30厘米)
+            safe_distance = 0.35
+            
+            r_obstacle = 0.0
+            if min_laser < safe_distance:
+                # 进入 0.3米 危险区，开始指数级扣分
+                # 离得越近，扣分越狠。
+                # 公式：(安全距 - 当前距) / 安全距
+                # 例如：当前 0.15米 -> (0.3-0.15)/0.3 = 0.5 -> 0.5 * 20 = -10分
+                r_obstacle = -20.0 * ((safe_distance - min_laser) / safe_distance)
+                
+                # 如果贴脸了 (小于 0.15米)，追加重罚，防止撞转角
+                if min_laser < 0.15:
+                    r_obstacle -= 10.0
+
+            # 3. 速度/动作奖励 (Action Reward) - 解决“犹豫”
+            # 只要它给出了前进速度 (action[0] > 0)，就给一点点微小的奖励
+            # 这能抵消微小的计算误差，鼓励它动起来
+            r_action = action[0] * 0.2
+            
+            # 4. 固定的步数惩罚
+            r_step = -0.1
+            
+            return r_distance + r_obstacle + r_step + r_action
