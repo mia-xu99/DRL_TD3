@@ -71,6 +71,21 @@ $ cd ~/DRL-robot-navigation/TD3
 $ python3 train_velodyne_td3.py
 ```
 
+Enable GPU-accelerated sensor plugins
+-----------------------------------
+If your Gazebo and plugins support GPU sensors (e.g., `gpu_ray` / `libgazebo_ros_velodyne_gpu_laser.so`), you can enable them when launching training:
+
+```shell
+# Use the script flag to request GPU-enabled plugins in the simulator
+$ python3 train_velodyne_td3.py --gpu
+```
+
+Or if you launch the scenario directly with roslaunch:
+
+```shell
+$ roslaunch multi_robot_scenario multi_robot_scenario.launch gpu:=true
+```
+
 To check the training process on tensorboard:
 ```shell
 $ cd ~/DRL-robot-navigation/TD3

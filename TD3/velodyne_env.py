@@ -65,7 +65,7 @@ def check_pos(x, y):
 class GazeboEnv:
     """Superclass for all Gazebo environments."""
 
-    def __init__(self, launchfile, environment_dim):
+    def __init__(self, launchfile, environment_dim, use_gpu=False):
         self.environment_dim = environment_dim
         self.odom_x = 0
         self.odom_y = 0
@@ -109,7 +109,11 @@ class GazeboEnv:
         if not path.exists(fullpath):
             raise IOError("File " + fullpath + " does not exist")
 
-        subprocess.Popen(["roslaunch", "-p", port, fullpath])
+        # If requested, pass gpu arg to the launch so xacros/plugins can enable GPU paths
+        roslaunch_cmd = ["roslaunch", "-p", port, fullpath]
+        if use_gpu:
+            roslaunch_cmd.append("gpu:=true")
+        subprocess.Popen(roslaunch_cmd)
         print("Gazebo launched!")
 
         # Set up the ROS publishers and subscribers

@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from velodyne_env import GazeboEnv
+import argparse
 
 
 class Actor(nn.Module):
@@ -52,7 +53,10 @@ file_name = "TD3_velodyne"  # name of the file to load the policy from
 # Create the testing environment
 environment_dim = 20
 robot_dim = 4
-env = GazeboEnv("multi_robot_scenario.launch", environment_dim)
+parser = argparse.ArgumentParser()
+parser.add_argument("--gpu", action="store_true", help="Enable GPU-based sensor plugins in Gazebo")
+args, unknown = parser.parse_known_args()
+env = GazeboEnv("multi_robot_scenario.launch", environment_dim, use_gpu=args.gpu)
 time.sleep(5)
 torch.manual_seed(seed)
 np.random.seed(seed)

@@ -10,6 +10,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from replay_buffer import ReplayBuffer
 from velodyne_env import GazeboEnv
+import argparse
 
 # PyTorch 2.x 优化：启用编译加速（Linux 推荐）
 try:
@@ -258,7 +259,10 @@ if save_model and not os.path.exists("./pytorch_models"):
 # Create the training environment
 environment_dim = 20
 robot_dim = 4
-env = GazeboEnv("multi_robot_scenario.launch", environment_dim)
+parser = argparse.ArgumentParser()
+parser.add_argument("--gpu", action="store_true", help="Enable GPU-based sensor plugins in Gazebo")
+args, unknown = parser.parse_known_args()
+env = GazeboEnv("multi_robot_scenario.launch", environment_dim, use_gpu=args.gpu)
 print("Waiting for Gazebo and ROS nodes to fully initialize...")
 time.sleep(10)  # Increased wait time for ROS topics to become available
 torch.manual_seed(seed)
