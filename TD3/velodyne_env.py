@@ -192,7 +192,10 @@ class GazeboEnv:
         # read velodyne laser state
         done, collision, min_laser = self.observe_collision(self.velodyne_data)
         v_state = []
-        v_state[:] = self.velodyne_data[:]
+        # v_state[:] = self.velodyne_data[:]
+        # 修改后: 将 0~10米 的数据除以 10，映射到 0~1 之间
+        v_state[:] = [x / 10.0 for x in self.velodyne_data]
+        
         laser_state = [v_state]
 
         # Wait for odometry data to be available
@@ -245,7 +248,11 @@ class GazeboEnv:
             target = True
             done = True
 
-        robot_state = [distance, theta, action[0], action[1]]
+        # robot_state = [distance, theta, action[0], action[1]]
+        # 修改后: 假设环境对角线最大约为 20米，将距离归一化
+        # 注意: theta (-pi~pi) 和 action (-1~1) 的范围本来就比较小，通常可以不归一化，或者将 theta 也除以 pi
+        robot_state = [distance / 20.0, theta, action[0], action[1]]
+        
         state = np.append(laser_state, robot_state)
         reward = self.get_reward(target, collision, action, min_laser)
         return state, reward, done, target
@@ -312,7 +319,10 @@ class GazeboEnv:
             raise RuntimeError("Odometry data not received within timeout period")
         
         v_state = []
-        v_state[:] = self.velodyne_data[:]
+        # v_state[:] = self.velodyne_data[:]
+        # 修改后:
+        v_state[:] = [x / 10.0 for x in self.velodyne_data]
+        
         laser_state = [v_state]
 
         distance = np.linalg.norm(
@@ -341,7 +351,9 @@ class GazeboEnv:
             theta = -np.pi - theta
             theta = np.pi - theta
 
-        robot_state = [distance, theta, 0.0, 0.0]
+        # robot_state = [distance, theta, 0.0, 0.0]
+        # 修改后:
+        robot_state = [distance / 20.0, theta, 0.0, 0.0]
         state = np.append(laser_state, robot_state)
         return state
 
@@ -461,9 +473,9 @@ class GazeboEnv:
     @staticmethod
     def get_reward(target, collision, action, min_laser):
         if target:
-            return 100.0
+            return 10.0
         elif collision:
-            return -100.0
+            return -10.0
         else:
             r3 = lambda x: 1 - x if x < 1 else 0.0
             return action[0] / 2 - abs(action[1]) / 2 - r3(min_laser) / 2

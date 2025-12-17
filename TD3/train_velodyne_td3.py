@@ -171,6 +171,10 @@ class TD3(object):
             # Perform the gradient descent
             self.critic_optimizer.zero_grad()
             loss.backward()
+
+            # === 【新增】 裁剪 Critic 梯度 ===
+            torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=0.5) 
+            # max_norm 一般设为 0.5 到 1.0 之间
             self.critic_optimizer.step()
 
             if it % policy_freq == 0:
@@ -180,6 +184,8 @@ class TD3(object):
                 actor_grad = -actor_grad.mean()
                 self.actor_optimizer.zero_grad()
                 actor_grad.backward()
+                # === 【新增】 裁剪 Actor 梯度 ===
+                torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=0.5)
                 self.actor_optimizer.step()
 
                 # Use soft update to update the actor-target network parameters by
@@ -240,7 +246,7 @@ policy_freq = 2  # Frequency of Actor network updates
 buffer_size = int(1e6)  # Maximum size of the buffer
 file_name = "TD3_velodyne"  # name of the file to store the policy
 save_model = True  # Weather to save the model or not
-load_model = False  # Weather to load a stored model
+load_model = True  # Weather to load a stored model
 random_near_obstacle = True  # To take random actions near obstacles or not
 
 # Create the network storage folders
