@@ -1,7 +1,7 @@
 <launch>
-<arg name="gui" value="false"/>
+<arg name="gui" default="false"/>
 <!-- Global GPU switch for sensors that support GPU-based plugins -->
-<arg name="gpu" value="false"/>
+<arg name="gpu" default="false"/>
 
    <!-- Gazebo  -->
   <!-- Forward gui flag explicitly so included launch respects parent setting -->
