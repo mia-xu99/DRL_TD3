@@ -184,7 +184,15 @@ class GazeboEnv:
             print("/gazebo/unpause_physics service call failed")
 
         # propagate state for TIME_DELTA seconds
-        time.sleep(TIME_DELTA)
+        # 修改点：使用 rospy.sleep，它会跟随 /clock 话题
+        # 如果 Gazebo 是 20倍速，这个 sleep 在现实中只需要 0.005秒 就会结束！
+        rospy.sleep(TIME_DELTA) 
+
+        # 修改点：在暂停之前，先确保收到数据
+        # 只要物理还在跑，数据就会来，不会卡死
+        timeout = time.time() + 2
+        while self.last_odom is None and time.time() < timeout:
+            time.sleep(0.01)
 
         rospy.wait_for_service("/gazebo/pause_physics")
         try:
@@ -306,7 +314,16 @@ class GazeboEnv:
         except (rospy.ServiceException) as e:
             print("/gazebo/unpause_physics service call failed")
 
-        time.sleep(TIME_DELTA)
+        # propagate state for TIME_DELTA seconds
+        # 修改点：使用 rospy.sleep，它会跟随 /clock 话题
+        # 如果 Gazebo 是 20倍速，这个 sleep 在现实中只需要 0.005秒 就会结束！
+        rospy.sleep(TIME_DELTA) 
+
+        # 修改点：在暂停之前，先确保收到数据
+        # 只要物理还在跑，数据就会来，不会卡死
+        timeout = time.time() + 2
+        while self.last_odom is None and time.time() < timeout:
+            time.sleep(0.01)
 
         rospy.wait_for_service("/gazebo/pause_physics")
         try:
