@@ -21,3 +21,5 @@ python t
 git add .
 git commit -m "修改描述"
 git push
+
+19 42 49

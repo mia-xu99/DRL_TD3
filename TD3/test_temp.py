@@ -69,7 +69,7 @@ max_ep = 500
 # ==========================================
 # 3. 这里修改为你保存的“最强模型”的名字
 # ==========================================
-file_name = "TD3_velodyne_best" 
+file_name = "TD3_velodyne_best_best" 
 # 如果你没有由 _best 结尾的文件，就改回 "TD3_velodyne"
 
 # Create the testing environment

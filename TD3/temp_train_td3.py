@@ -158,7 +158,7 @@ class TD3(object):
         self,
         replay_buffer,
         iterations,
-        batch_size=100,
+        batch_size=40,
         discount=0.99, # 建议改为 0.99，原来 0.99999 太大了
         tau=0.005,
         policy_noise=0.2,
@@ -264,8 +264,10 @@ buffer_size = int(1e6)
 # file_name = "TD3_velodyne"
 file_name = "TD3_velodyne_best"
 save_model = True
-load_model = True
+load_model = False
 random_near_obstacle = True
+SAFE_DIST = 0.6      # meters
+LIDAR_MAX = 10.0     # meters
 
 if not os.path.exists("./results"):
     os.makedirs("./results")
@@ -370,7 +372,7 @@ while timestep < max_timesteps:
     if random_near_obstacle:
         if (
             np.random.uniform(0, 1) > 0.85
-            and min(state[0:environment_dim]) < 0.06 # 注意：这里用归一化后的数据判断，0.06 = 0.6米
+            and min(state[0:environment_dim]) < SAFE_DIST / LIDAR_MAX # 注意：这里用归一化后的数据判断，0.06 = 0.6米
             and count_rand_actions < 1
         ):
             count_rand_actions = np.random.randint(8, 15)

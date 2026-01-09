@@ -102,7 +102,7 @@ class TD3(object):
         self.critic = Critic(state_dim, action_dim).to(device)
         self.critic_target = Critic(state_dim, action_dim).to(device)
         self.critic_target.load_state_dict(self.critic.state_dict())
-        self.critic_optimizer = torch.optim.Adam(self.actor.parameters(), lr=1e-4)
+        self.critic_optimizer = torch.optim.Adam(self.actor.parameters(), lr=5e-4)
 
         self.max_action = max_action
         self.writer = SummaryWriter()
@@ -231,8 +231,8 @@ expl_decay_steps = (
     500000  # Number of steps over which the initial exploration noise will decay over
 )
 expl_min = 0.1  # Exploration noise after the decay in range [0...expl_noise]
-batch_size = 40  # Size of the mini-batch
-discount = 0.99999  # Discount factor to calculate the discounted future reward (should be close to 1)
+batch_size = 100   # Size of the mini-batch
+discount = 0.99  # Discount factor to calculate the discounted future reward (should be close to 1)
 tau = 0.005  # Soft target update variable (should be close to 0)
 policy_noise = 0.2  # Added noise for exploration
 noise_clip = 0.5  # Maximum clamping values of the noise
