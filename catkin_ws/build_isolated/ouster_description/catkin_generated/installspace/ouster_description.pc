@@ -1,0 +1,8 @@
+prefix=/home/mia/DRL-robot-navigation/catkin_ws/install_isolated
+
+Name: ouster_description
+Description: Description of ouster_description
+Version: 1.0.7
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

@@ -1,0 +1,6 @@
+image: /home/bit1010/demo05_ws/src/pja/map.pgm
+resolution: 0.05
+origin: [-2.25, -2.29632, 0.0]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196

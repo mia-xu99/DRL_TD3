@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="world" default="empty"/> 
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find turtlebot3_gazebo)/worlds/scene43.world"/>
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="headless" value="$(arg headless)"/>
+    <arg name="debug" value="$(arg debug)"/>
+  </include>
+
+  <arg name="robot_description" default="$(find pja)/urdf/pro3.xacro"/>
+  <param name="robot_description" command="$(find xacro)/xacro  '$(arg robot_description)' "/>
+
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_robot" args="-urdf -param /robot_description -model robot -x -0 -y 0 -z 0 -R 0 -P 0 -Y 0.0"></node>
+
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+    <param name="publish_frequency" type="double" value="60.0" />
+  </node>
+
+  <!-- Map server -->
+  <arg name="map_file" default="$(find turtlebot3_navigation)/maps/scene43.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
+
+  <!-- Localization-->
+   <node name="cartographer_node" pkg="cartographer_ros"
+      type="cartographer_node" args="
+          -configuration_directory $(find cartographer_ros)/configuration_files
+          -configuration_basename location.lua
+          -load_state_filename /home/bit1010/demo05_ws/src/pja/scene43.pbstream"
+      output="screen">
+    <remap from="points2" to="/os_cloud_node/points" />
+    <remap from="scan" to="/rlscan" />
+    <remap from="imu" to="/os_cloud_node/imu" />
+    <remap from="odom" to="/wheel_odom" />
+  </node>
+
+ <!--<node name="cartographer_occupancy_grid_node" pkg="cartographer_ros"
+      type="cartographer_occupancy_grid_node" args="-resolution 0.05 -publish_period_sec 0.5" />-->
+
+
+        <!--对于虚拟定位，需要设置一个/odom与/map之间的静态坐标变换 -->
+            <!--<node pkg="tf" type="static_transform_publisher" name="map_odom_broadcaster" args="0 0 0 0 0 0 /map /odom 100" />-->
+
+  <!-- Move base -->
+  <include file="$(find pja)/launch/move_base_single.launch">
+    <arg name="cmd_vel_topic" value="/cmd_vel" />
+    <arg name="odom_topic" value="/wheel_odom" />
+    <!--arg name="sensor_scan" value="velodyne_points" /-->
+    <!--  <arg name="odom_topic" default="state_estimation" />-->
+    <arg name="move_forward_only" value="true"/>
+  </include>
+
+
+</launch>

@@ -1,0 +1,16 @@
+tool.launch就是把里程计坐标转换成轨迹发送出去
+
+NF是论文里提出来的nearest frontier，就是基于传统边界的一种方法
+具体的NF文件里会多加个explore_lite的launch文件
+但是似乎不是给定坐标点的那种导航，而是自主探索没改过来
+
+带rl就只是启动gazebo环境和加载机器人模型
+
+test.launch没发现是干啥的
+amcl.launch不知道是干啥的
+en.launch用了explore_lite但是cmd_vel里又是写的cmd_vel_rl
+multi.launch,启动一堆车，再一个封闭环境里，不知道是干啥
+
+目前理解到的，使用drl也得需要move_base去控制底盘运动，drl只是发送一个速度值给到move_base
+所以好多launch里面把movebase里的速度话题（其实是move_base的速度发布话题）改成ccmd_vel。所以就是后台move_base的话题也在算，但是车订阅的是cmd_vel也就是由强化学习发出来的
+move_base在传统导航框架里既负责通过path和goal计算出速度cmd_vel，又负责将cmd_vel转换为控制信号。进行执行

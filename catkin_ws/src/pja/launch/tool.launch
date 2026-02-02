@@ -1,0 +1,15 @@
+<launch>
+
+
+<!--  <node pkg="pja" type="cmdConverter" respawn="false" name="cmdConverter" output="screen"/>-->
+  <!--<node pkg="pja" type="model2path" respawn="false" name="model2path" output="screen"/>-->
+
+  <node pkg="pja" type="odom2path" respawn="false" name="odom2path" output="screen">
+    <param name="trajTopic" value="dwa_odom2path"/>
+    <param name="odomTopic" value="wheel_odom"/>
+  </node>
+
+
+
+</launch>
+

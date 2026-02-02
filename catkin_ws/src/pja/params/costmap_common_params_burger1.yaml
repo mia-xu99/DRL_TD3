@@ -1,0 +1,47 @@
+#设置机器人检测障碍物最大的距离更新包含基座7米以内的障碍物信息
+obstacle_range: 2.7
+#检测机器人检测自由空间的最大距离清除8米以外的信息
+raytrace_range: 3.0
+#trinary_costmap(bool,fault:true)如果是true 所有地图都被转意成三个值:no_information/free_space/
+#lethal_obstacle 如果true地图消息是一系列值
+trinary_costmap: false
+#map_topic: haha
+#lethal_cost_threshold从地图服务器读取地图时考虑代价致命性的阈值
+lethal_cost_threshold: 70
+#设置机器人在二维地图上的占用面积  机器人中心为坐标原点
+footprint: [ [ -0.257, -0.257 ], [ -0.257, 0.257 ], [ 0.257, 0.257 ], [ 0.257, -0.257 ] ]
+#robot_radius: 0.105如果机器人不是圆形的不用设置
+#表示机器人路径规划应与机器人保持的安全距离
+inflation_radius: 0.3
+#障碍物膨胀比例系数，全局路径呈现锯齿状时调大，可以使全局路径较为平滑，inflation_radius也要调大
+cost_scaling_factor: 3.0
+
+map_type: costmap
+#observation_source 列出了代价地图所需要的所有传感器  scan到表传感器参考系的名称
+observation_sources: scan
+#scan: {sensor_frame: base_scan, data_type: LaserScan, topic: scan, marking: true, clearing: true}
+scan: {
+ #检测障碍物的最大高度和最小高度
+  min_obstacle_height: -0.2,
+  max_obstacle_height: 0.8,
+  expected_update_rate: 0.3,
+  #        observation_persistence: 0,
+  #  sensor_frame: velodyne,
+  data_type: PointCloud2, topic: velodyne_points,
+  #maeking和clearning的参数用来表示是否用传感器的实时信息来添加或消除代价地图中的障碍物信息
+  marking: false,
+  clearing: true
+}
+velodyne: {
+ #检测障碍物的最大高度和最小高度  缺少frame_name?
+  min_obstacle_height: 0.3,
+  max_obstacle_height: 0.8,
+  #  expected_update_rate: 0.3,
+  observation_persistence: 2,
+  #  sensor_frame: velodyne,
+  data_type: PointCloud2, topic: velodyne_points,
+  #  marking: true,
+  clearing: false
+}
+
+

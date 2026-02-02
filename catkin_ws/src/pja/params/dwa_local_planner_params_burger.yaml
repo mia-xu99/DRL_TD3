@@ -1,0 +1,65 @@
+DWAPlannerROS:
+#TrajectoryPlannerROS:
+# Robot Configuration Parameters
+  max_vel_x: 0.8 #0.5 #0.72
+  min_vel_x: 0
+
+  max_vel_y: 0.0
+  min_vel_y: 0.0
+
+# The velocity when robot is moving in a straight line
+  max_vel_trans:  0.8 #0.5 #0.8
+  min_vel_trans:  0.05
+
+  max_vel_theta: 0.75 #0.5 #0.7
+  min_vel_theta: -0.75 #-0.5 #-0.7
+  min_in_place_vel_theta: 0.75 #0.5
+  acc_lim_x: 2.5
+  acc_lim_y: 0.0
+  acc_lim_theta: 2.5
+
+# Goal Tolerance Parametes
+#目的地误差
+  xy_goal_tolerance: 0.3
+#偏航误差
+  yaw_goal_tolerance: 0.1
+#如果目标误差被锁定，机器人到达xy位置，他将旋转到位
+  latch_xy_goal_tolerance: false
+
+# Forward Simulation Parameters
+#轨迹模拟时间
+  sim_time: 1.0  #<2.0将导致性能有限
+  vx_samples: 10
+  vy_samples: 0
+  vth_samples: 20
+#######
+  controller_frequency: 5.0
+
+# Trajectory Scoring Parameters
+#pdist_scale 控制器距离给定的路径有多远的加权值
+  path_distance_bias: 32.0
+#gdist_scale控制器试图到达局部目标或是控制速度的加权值
+  goal_distance_bias: 24.0
+#meter_scoring 上述两个是否以米为单位被表示
+  meter_scoring: true
+#控制器避障好坏的加权值
+  occdist_scale: 0.6
+#forward_point_distance 以机器人为原点额外放置一个打分点的距离
+  forward_point_distance: 0.1
+#stop_time_buffer机器人发生碰撞前必须拥有的最少时间
+  stop_time_buffer: 0.3
+#开始缩放机器人足迹时的速度的绝对值
+  scaling_speed: 0.25
+#最大缩放因子
+  max_scaling_factor: 0.2
+
+# Oscillation Prevention Parameters机器人运动多远才会重置震荡标记
+  oscillation_reset_dist: 0.05
+
+# Debugging
+  publish_traj_pc : true
+  publish_cost_grid_pc: true
+
+
+
+

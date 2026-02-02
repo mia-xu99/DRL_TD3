@@ -1,0 +1,62 @@
+#当move_base空闲时，为true会关掉costmap
+shutdown_costmaps: false
+#cmd_vel发送命令的频率
+##########
+controller_frequency: 5.0   # 5.0
+#在空间清理操作执行前，留给规划器多长时间找到一条有效规划
+planner_patience: 5
+#在空间清理操作执行前，规划器等多长时间等有效控制下发
+controller_patience: 15.0
+conservative_reset_dist: 3.0
+#全局规划执行频率如果设置为0全局规划器仅在接受到新目标点或者局部规划其报告路径堵塞时才会重新规划
+######
+#planner_frequency: 3.0
+planner_frequency: 3.0
+#允许震荡时间
+oscillation_timeout: 5.0
+#震荡最大距离超过不是震荡
+
+oscillation_distance: 0.2
+max_planning_retries: 5
+####
+recovery_behavior_enabled: false
+max_planning_retries: -1.0
+
+#   planner_patience：在空间清理操作执行前,留给规划器多长时间来找出一条有效规划
+#   oscillation_timeout：执行修复机制前,允许振荡的时长
+#   oscillation_distance：来回运动在多大距离以上不会被认为是振荡（DWA planner里也有一个类似的参数）
+#   base_local_planner：指定用于move_base的局部规划器插件名称
+#   base_global_planner：指定用于move_base的全局规划器插件名称
+#   recovery_behavior_enabled：是否启用机器人恢复行为
+#   recovery_behaviors：定义机器人恢复行为
+#   clearing_rotation_allowed：机器人是否在尝试清理空间时进行原地旋转
+#   max_planning_retries：在执行恢复行为前允许重新规划的次数。-1.0 的值对应于无限重试
+
+#GlobalPlanner:                            # Also see: http://wiki.ros.org/global_planner
+#  old_navfn_behavior: true                # 是否使用原来的navfn功能包
+#  use_quadratic: true                     # 是否使用二次函数近似
+#  use_dijkstra: false                     # Use dijkstra's algorithm. Otherwise, A*, default true
+#  use_grid_path: false                    # 是否沿着网格边界规划，偏向于直线穿越网格，否则使用梯度下降算法，路径更为光滑
+  
+#  allow_unknown: false                    # Allow planner to plan through unknown space, default true 
+#  planner_window_x: 0.0                   # default 0.0
+#  planner_window_y: 0.0                   # default 0.0
+#  default_tolerance: 0.5                  # If goal in obstacle, plan to the closest point in radius default_tolerance, default 0.0
+  
+#  publish_scale: 100                      # Scale by which the published potential gets multiplied, default 100
+#  planner_costmap_publish_frequency: 2.0   # default 0.0
+#  
+#  lethal_cost: 253                        # default 253
+#  neutral_cost: 66                        # default 50
+#  cost_factor: 0.55                       # Factor to multiply each cost from costmap by, default 3.0
+#  publish_potential: true                 # Publish Potential Costmap (this is not like the navfn pointcloud2 potential), default true
+
+GlobalPlanner:
+  use_dijkstra: false
+  allow_unknown: false
+  orientation_window_size: 100
+  use_grid_path: false
+  orientation_mode: 3
+  old_navfn_behavior: flase
+  use_quadratic: true
+  cost_factor: 0.55

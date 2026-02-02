@@ -1,0 +1,18 @@
+<launch>
+
+
+
+  <node pkg="ouster_ros" type="os_cloud_node" name="os_cloud_node" output="screen" required="false">
+    <remap from="~/os_config" to="/os_node/os_config"/>
+    <remap from="~/lidar_packets" to="/os_node/lidar_packets"/>
+    <remap from="~/imu_packets" to="/os_node/imu_packets"/>
+
+    <param name ="window" value="3" />
+    <param name ="throd" value="1000"/>
+    <remap from="os_cloud_node/points_out" to="os_cloud_node/points"/>
+    <remap from="os_cloud_node/points" to="os_cloud_node/points_out"/>
+    <!-- <param name="~/tf_prefix" value="$(arg tf_prefix)"/> -->
+  </node>
+
+ 
+</launch>

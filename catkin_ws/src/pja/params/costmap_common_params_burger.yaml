@@ -1,0 +1,35 @@
+footprint: [ [ -0.25, -0.25 ], [ -0.25, 0.25 ], [ 0.25, 0.25 ], [ 0.25,-0.25 ] ]
+#robot_radius: 0.105
+map_type: costmap
+
+track_inknown_space: true
+obstacle_range: 4.0
+raytrace_range: 4.5
+#trinary_costmap: false
+#  lethal_cost_threshold: 70
+inflation_radius: 0.2
+cost_scaling_factor: 3.0
+
+observation_sources: scan
+#scan: {sensor_frame: base_scan, data_type: LaserScan, topic: scan, marking: true, clearing: true}
+scan: {
+  min_obstacle_height: 0.1,
+  max_obstacle_height: 3.0,
+  expected_update_rate: 0.3,
+    #        observation_persistence: 0,
+  #  sensor_frame: velodyne,
+  data_type: LaserScan, topic: /rlscan,
+  marking: true,
+  clearing: true
+}
+velodyne: {
+  min_obstacle_height: 0.06,
+  max_obstacle_height: 1.0,
+  expected_update_rate: 0.3,
+  observation_persistence: 2,
+    #  sensor_frame: velodyne,
+  data_type: PointCloud2, topic: /rl/os_cloud_node/points,
+  marking: true,
+  clearing: true
+}
+

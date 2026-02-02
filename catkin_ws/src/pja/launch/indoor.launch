@@ -1,0 +1,107 @@
+<launch>
+
+<!--  <arg name="world_name" default="indoor"/>-->
+<!--  <arg name="vehicleHeight" default="0.75"/>-->
+<!--  <arg name="cameraOffsetZ" default="0"/>-->
+<!--  <arg name="vehicleX" default="0"/>-->
+<!--  <arg name="vehicleY" default="0"/>-->
+<!--  <arg name="terrainZ" default="0"/>-->
+<!--  <arg name="vehicleYaw" default="0"/>-->
+<!--&lt;!&ndash;  <arg name="gazebo_gui" default="false"/>&ndash;&gt;-->
+<!--  <arg name="gazebo_gui" default="true"/>-->
+<!--  <arg name="checkTerrainConn" default="false"/>-->
+
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="false"/>
+<!--  <arg name="gui" default="true"/>-->
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+  <arg name="verbose" default="false"/>
+  <arg name="world_name" default="indoor"/>
+<!--  <arg name="world_name" default="turtlebot3_world"/>-->
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch" >
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="headless" value="$(arg headless)"/>
+    <arg name="debug" value="$(arg debug)"/>
+    <arg name="verbose" value="$(arg verbose)"/>
+<!--    <arg name="world_name" value="$(find vehicle_simulator)/world/$(arg world_name).world"/>-->
+    <arg name="world_name" value="$(find pja)/world/$(arg world_name).world"/>
+  </include>
+
+
+  <include file="$(find terrain_analysis)/launch/terrain_analysis.launch" >
+    <arg name="odom" value="odom"/>
+    <arg name="registered_scan" value="point_cloud_transformed"/>
+  </include>
+
+
+<!--  <include file="$(find local_planner)/launch/local_planner.launch" >-->
+<!--    <arg name="registered_scan" value="point_cloud_transformed"/>-->
+<!--    <arg name="odom" value="odom"/>-->
+<!--    <arg name="cameraOffsetZ" value="0.2"/>-->
+<!--      <arg name="goalX" value="1"/>-->
+<!--      <arg name="goalY" value="1"/>-->
+<!--    </include>-->
+
+
+<!--  <include file="$(find visualization_tools)/launch/visualization_tools.launch" >-->
+<!--    <arg name="world_name" value="$(arg world_name)"/>-->
+<!--  </include>-->
+
+  <node launch-prefix="nice" pkg="rviz" type="rviz" name="rvizGA" args="-d $(find vehicle_simulator)/rviz/indoor.rviz" respawn="true"/>
+
+  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find vehicle_simulator)/urdf/turtlebot3_burger.urdf.xacro'" />
+<!--  <node pkg="gazebo_ros" type="spawn_model" name="spawn_robot" args="-urdf -param /robot_description -model robot -x -2 -y -0.5 -z 0"/>-->
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_robot" args="-urdf -param /robot_description -model robot -x -0 -y -0 -z 0">
+<!--    <remap from="cmd_vel" to="move_base/cmd_vel"></remap>-->
+  </node>
+
+
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+    <param name="publish_frequency" type="double" value="60.0" />
+  </node>
+
+
+<!--  <node pkg="tf" type="static_transform_publisher" name="velodyneTrans" args="0 0 0.2 0 0 0 /base_footprint /velodyne  1000"/>-->
+  <node pkg="tf" type="static_transform_publisher" name="odomTrans" args="0 0 0 0 0 0 /odom /map  1000"/>
+
+  <include file="$(find pja)/launch/move_base.launch">
+    <arg name="cmd_vel_topic" value="/cmd_vel" />
+    <arg name="odom_topic" value="odom" />
+    <arg name="sensor_scan" value="velodyne_points" />
+    <!--  <arg name="odom_topic" default="state_estimation" />-->
+    <arg name="move_forward_only" default="false"/>
+  </include>
+
+
+
+  <!-- Map server -->
+    <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
+  <arg name="map_file" default="$(find turtlebot3_navigation)/maps/map.yaml"/>
+<!--  <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/>-->
+
+  <!-- AMCL -->
+<!--  <include file="$(find turtlebot3_navigation)/launch/amcl.launch"/>-->
+
+  <!-- move_base -->
+<!--  <include file="$(find vehicle_simulator)/launch/move_base.launch"></include>-->
+
+
+<!--      <include file="$(find vehicle_simulator)/launch/explore_lite.launch">-->
+<!--      <arg name="robot_base_frame" value="base_footprint"/>-->
+<!--      <arg name="costmap_topic" value="move_base/global_costmap/costmap"/>-->
+<!--      <arg name="costmap_updates_topic" value="move_base/global_costmap/costmap_updates"/>-->
+<!--    </include>-->
+
+  <include file="$(find transform_point_cloud)/launch/pja.launch"/>
+  <include file="$(find pja)/launch/tool.launch"/>
+
+
+  <include file="$(find aloam_velodyne)/launch/aloam_velodyne_VLP_16.launch"/>
+  <node pkg="tf" type="static_transform_publisher" name="cameraInit" args="0 0 0 0 0 0 /odom /camera_init   1000"/>
+
+</launch>

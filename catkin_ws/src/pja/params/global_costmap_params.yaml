@@ -1,0 +1,20 @@
+global_costmap:
+#  global_frame: os_sensor
+  global_frame: tb3_4/odom
+  robot_base_frame: tb3_4/base_link
+
+  update_frequency: 5.0
+  publish_frequency: 5.0
+  transform_tolerance: 0.5
+
+  static_map: False
+  rolling_window: false
+  width: 150
+  height: 150
+  resolution: 0.1
+  origin_x: -50
+  origin_y: -50
+  track_unknown_space: true
+  combination_method: 1
+
+

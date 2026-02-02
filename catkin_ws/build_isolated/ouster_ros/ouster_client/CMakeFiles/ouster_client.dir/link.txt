@@ -1,0 +1,2 @@
+/usr/bin/ar qc /home/mia/DRL-robot-navigation/catkin_ws/devel_isolated/ouster_ros/lib/libouster_client.a  CMakeFiles/ouster_client.dir/src/client.cpp.o CMakeFiles/ouster_client.dir/src/types.cpp.o CMakeFiles/ouster_client.dir/src/netcompat.cpp.o CMakeFiles/ouster_client.dir/src/lidar_scan.cpp.o CMakeFiles/ouster_client.dir/src/image_processing.cpp.o
+/usr/bin/ranlib /home/mia/DRL-robot-navigation/catkin_ws/devel_isolated/ouster_ros/lib/libouster_client.a

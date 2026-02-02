@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/mia/DRL-robot-navigation/catkin_ws/devel_isolated/autolabor_description/setup.sh

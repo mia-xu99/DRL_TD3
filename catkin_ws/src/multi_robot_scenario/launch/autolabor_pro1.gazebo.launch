@@ -1,0 +1,24 @@
+<launch>
+
+  <arg name="robot_name" default="autolabor_pro1" />
+  <arg name="robot_position" default="-x 0.0 -y 0.0 -z 0.01 -R 0 -P 0 -Y 0.0" />
+
+  <!-- Load the URDF into the ROS Parameter Server -->
+  <!-- Using pja's pro1.urdf.xacro which includes Ouster LiDAR -->
+  <param name="robot_description" command="$(find xacro)/xacro '$(find pja)/urdf/pro1.urdf.xacro'" />
+
+  <!-- Spawn the robot model in Gazebo -->
+  <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" 
+    args="-urdf -model $(arg robot_name) -param robot_description $(arg robot_position) "/>
+
+  <!-- Robot state publisher -->
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+    <param name="publish_frequency" type="double" value="30.0"/>
+  </node>
+  
+  <!-- Joint state publisher -->
+  <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher">
+    <param name="publish_frequency" type="double" value="30.0"/>
+  </node>
+
+</launch>

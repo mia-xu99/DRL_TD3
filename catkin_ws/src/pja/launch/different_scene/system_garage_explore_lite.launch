@@ -1,0 +1,155 @@
+<launch>
+
+  <arg name="world_name" default="indoor"/>
+  <arg name="vehicleHeight" default="0.75"/>
+  <arg name="cameraOffsetZ" default="0"/>
+  <arg name="vehicleX" default="0"/>
+  <arg name="vehicleY" default="0"/>
+  <arg name="terrainZ" default="0"/>
+  <arg name="vehicleYaw" default="0"/>
+  <arg name="gazebo_gui" default="true"/>
+<!--  <arg name="gazebo_gui" default="false"/>-->
+  <arg name="checkTerrainConn" default="true"/>
+
+  <include file="$(find ps3joy)/launch/ps3.launch" />
+
+
+
+
+  <include file="$(find terrain_analysis)/launch/terrain_analysis.launch" />
+
+  <include file="$(find terrain_analysis_ext)/launch/terrain_analysis_ext.launch" >
+    <arg name="checkTerrainConn" value="$(arg checkTerrainConn)"/>
+  </include>
+
+  <include file="$(find vehicle_simulator)/launch/vehicle_simulator.launch" >
+    <arg name="world_name" value="$(arg world_name)"/>
+    <arg name="vehicleHeight" value="$(arg vehicleHeight)"/>
+    <arg name="cameraOffsetZ" value="$(arg cameraOffsetZ)"/>
+    <arg name="vehicleX" value="$(arg vehicleX)"/>
+    <arg name="vehicleY" value="$(arg vehicleY)"/>
+    <arg name="terrainZ" value="$(arg terrainZ)"/>
+    <arg name="vehicleYaw" value="$(arg vehicleYaw)"/>
+    <arg name="gui" value="$(arg gazebo_gui)"/>
+  </include>
+
+  <include file="$(find sensor_scan_generation)/launch/sensor_scan_generation.launch" />
+
+  <include file="$(find visualization_tools)/launch/visualization_tools.launch" >
+    <arg name="world_name" value="$(arg world_name)"/>
+  </include>
+
+  <node launch-prefix="nice" pkg="rviz" type="rviz" name="rvizGA" args="-d $(find vehicle_simulator)/rviz/vehicle_simulator.rviz" respawn="true"/>
+
+  <arg name="map_file" default="pja"/>
+
+
+  <!-- Map server -->
+  <!--  <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/>-->
+
+
+  <!-- move_base -->
+  <include file="$(find vehicle_simulator)/launch/move_base.launch" />
+
+  <arg name="sensorOffsetX" default="0"/>
+  <arg name="sensorOffsetY" default="0"/>
+  <arg name="twoWayDrive" default="true"/>
+  <arg name="maxSpeed" default="4.0"/>
+  <arg name="autonomyMode" default="true"/>
+  <arg name="autonomySpeed" default="2.0"/>
+  <arg name="joyToSpeedDelay" default="2.0"/>
+  <arg name="goalX" default="0"/>
+  <arg name="goalY" default="0"/>
+
+<!--  <node pkg="cmdConverter" type="cmdConverter" respawn="false" name="cmdConverter" output="screen"/>-->
+
+<!--    <include file="$(find local_planner)/launch/local_planner.launch" >-->
+<!--      <arg name="cameraOffsetZ" value="$(arg cameraOffsetZ)"/>-->
+<!--      <arg name="goalX" value="$(arg vehicleX)"/>-->
+<!--      <arg name="goalY" value="$(arg vehicleY)"/>-->
+<!--    </include>-->
+
+
+    <node pkg="tf" type="static_transform_publisher" name="vehicleTransPublisher" args="-$(arg sensorOffsetX) -$(arg sensorOffsetY) 0 0 0 0 /sensor /vehicle 1000"/>
+
+    <node pkg="tf" type="static_transform_publisher" name="sensorTransPublisher" args="0 0 $(arg cameraOffsetZ) -1.5707963 0 -1.5707963 /sensor /camera 1000"/>
+
+
+
+  <node pkg="tf" type="static_transform_publisher" name="baselinkTransPublisher" args="0 0 0 0 0 0 /vehicle /base_link  1000"/>
+
+<!--  <include file="$(find vehicle_simulator)/launch/explore_lite.launch"/>-->
+
+
+<!--  <arg name="scan_topic" default="scan" />                  &lt;!&ndash; 根据自己发布scan名称进行修改 &ndash;&gt;-->
+<!--  <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" output="screen" clear_params="true">-->
+<!--    <param name="base_frame" value="vehicle"/>     &lt;!&ndash; 根据自己的基座标系名称进行修改 &ndash;&gt;-->
+<!--    <param name="odom_frame" value="sensor"/>               &lt;!&ndash; 根据自己的里程计坐标系名称进行修改 &ndash;&gt;-->
+<!--    <param name="map_update_interval" value="0.25"/>-->
+<!--    &lt;!&ndash; Set maxUrange < actual maximum range of the Laser &ndash;&gt;-->
+<!--    <param name="maxRange" value="5.0"/>-->
+<!--    <param name="maxUrange" value="4.5"/>-->
+<!--    <param name="sigma" value="0.05"/>-->
+<!--    <param name="kernelSize" value="1"/>-->
+<!--    <param name="lstep" value="0.05"/>-->
+<!--    <param name="astep" value="0.05"/>-->
+<!--    <param name="iterations" value="5"/>-->
+<!--    <param name="lsigma" value="0.075"/>-->
+<!--    <param name="ogain" value="3.0"/>-->
+<!--    <param name="lskip" value="0"/>-->
+<!--    <param name="srr" value="0.01"/>-->
+<!--    <param name="srt" value="0.02"/>-->
+<!--    <param name="str" value="0.01"/>-->
+<!--    <param name="stt" value="0.02"/>-->
+<!--    <param name="linearUpdate" value="0.5"/>-->
+<!--    <param name="angularUpdate" value="0.436"/>-->
+<!--    <param name="temporalUpdate" value="-1.0"/>-->
+<!--    <param name="resampleThreshold" value="0.5"/>-->
+<!--    <param name="particles" value="80"/>-->
+<!--    <param name="xmin" value="-1.0"/>-->
+<!--    <param name="ymin" value="-1.0"/>-->
+<!--    <param name="xmax" value="1.0"/>-->
+<!--    <param name="ymax" value="1.0"/>-->
+<!--    <param name="delta" value="0.05"/>-->
+<!--    <param name="llsamplerange" value="0.01"/>-->
+<!--    <param name="llsamplestep" value="0.01"/>-->
+<!--    <param name="lasamplerange" value="0.005"/>-->
+<!--    <param name="lasamplestep" value="0.005"/>-->
+<!--    <remap from="scan" to="$(arg scan_topic)"/>-->
+<!--  </node>-->
+
+<node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan">
+  <remap from="cloud_in" to="/sensor_scan"/>
+  <param name="range_min" value="0.0"/>
+  <param name="range_max" value="10.0"/>
+  <param name="max_height" value="5.0"/>
+  <param name="min_height" value="0"/>
+  <param name="angle_increment" value="0.05"/>
+<!--  <param name="min_height" value="-1"/>-->
+<!--  <param name="max_height" value="5.0"/>-->
+</node>
+
+<!--  <node pkg="octomap_server" type="octomap_server_node" name="octomap_server">-->
+<!--    &lt;!&ndash; topic from where pointcloud2 messages are subscribed &ndash;&gt;-->
+<!--    <remap from="cloud_in" to="sensor_scan" />-->
+<!--    <remap from="projected_map" to="map" />-->
+<!--&lt;!&ndash;    <remap from="cloud_in" to="cmd_vel" />&ndash;&gt;-->
+<!--    &lt;!&ndash; resolution in meters per pixel &ndash;&gt;-->
+<!--    <param name="resolution" value="0.05" />-->
+<!--    &lt;!&ndash; name of the fixed frame, needs to be "/map" for SLAM &ndash;&gt;-->
+<!--    <param name="frame_id" type="string" value="map" />-->
+<!--    <param name="base_frame_id" type="string" value="/vehicle" />-->
+<!--    &lt;!&ndash; max range / depth resolution of the kinect in meter &ndash;&gt;-->
+<!--    <param name="sensor_model/max_range" value="20.0" />-->
+<!--    <param name="latch" value="false" />-->
+<!--    &lt;!&ndash; max/min height for occupancy map, should be in meters &ndash;&gt;-->
+<!--    <param name="pointcloud_max_z" value="10" />-->
+<!--    <param name="pointcloud_min_z" value="-0.2" />-->
+<!--    <param name="filter_ground" value="true" />-->
+<!--    <param name="ground_filter_angle" value="0.15" />-->
+<!--    <param name="ground_filter/distance " value="0.55" />-->
+<!--    <param name="occupancy_min_z " value="0" />-->
+<!--    <param name="occupancy_max_z " value="2" />-->
+<!--  </node>-->
+
+</launch>

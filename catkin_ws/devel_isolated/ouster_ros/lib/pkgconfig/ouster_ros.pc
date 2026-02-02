@@ -1,0 +1,8 @@
+prefix=/home/mia/DRL-robot-navigation/catkin_ws/devel_isolated/ouster_ros
+
+Name: ouster_ros
+Description: Description of ouster_ros
+Version: 0.2.1
+Cflags: -I/home/mia/DRL-robot-navigation/catkin_ws/devel_isolated/ouster_ros/include -I/home/mia/DRL-robot-navigation/catkin_ws/src/ouster_example/ouster_ros/include -I/home/mia/DRL-robot-navigation/catkin_ws/src/ouster_example/ouster_ros/../ouster_client/include -I/home/mia/DRL-robot-navigation/catkin_ws/src/ouster_example/ouster_ros/../ouster_client/include/optional-lite -I/usr/include/eigen3
+Libs: -L${prefix}/lib -louster_ros
+Requires: roscpp message_runtime std_msgs sensor_msgs geometry_msgs

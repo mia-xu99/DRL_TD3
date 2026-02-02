@@ -1,0 +1,21 @@
+<launch>
+<include file="$(find pja)/launch/create_world.launch"/>
+<include file="$(find pja)/launch/place_my_robot.launch">
+     <arg name="robot_x_pos" value="5.0"/>
+     <arg name="robot_y_pos" value="0.0"/>
+     <arg name="robot_z_pos" value="0.0"/>
+     <arg name="robot_yaw"   value="3.14"/>
+     <arg name="robot_name" value="tb3_4"/>
+     <arg name="ns" value="tb3_4"/>
+</include>
+  <include file="$(find pja)/launch/move_base.launch">
+    <arg name="cmd_vel_topic" value="/cmd_vel_rl" />
+    <arg name="odom_topic" value="/wheel_odom_rl" />
+    <!--arg name="sensor_scan" value="velodyne_points" /-->
+    <!--  <arg name="odom_topic" default="state_estimation" />-->
+    <arg name="move_forward_only" default="false"/>
+  </include>
+<include file="$(find pja)/launch/place_multi.launch"/>
+<!--<include file="$(find pja)/launch/tool.launch"/>-->
+</launch>
+
