@@ -63,7 +63,7 @@ class TD3(object):
 
 # Set the parameters for the implementation
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu") 
-seed = 0  
+seed = int(time.time()) # 使用当前时间作为种子，每次都不一样
 max_ep = 500
 
 # ==========================================
