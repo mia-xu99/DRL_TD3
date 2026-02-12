@@ -275,7 +275,7 @@ atexit.register(cleanup_environment)
 # 主程序设置
 # ==========================================
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-seed = 0
+seed = 10
 eval_freq = 5e3
 max_ep = 500
 eval_ep = 10

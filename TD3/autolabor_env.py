@@ -36,7 +36,7 @@ TIME_DELTA = 0.1
 
 # LiDAR height filter for Ouster
 # More aggressive filter to detect low obstacles
-LIDAR_HEIGHT_FILTER = -0.30  # Filter points well below ground to catch low obstacles
+LIDAR_HEIGHT_FILTER = -0.55  # Filter points well below ground to catch low obstacles
                              # Original -0.2 / -0.15 were too strict and missed short obstacles
 
 
@@ -286,11 +286,20 @@ class AutolaborEnv:
         if distance < GOAL_REACHED_DIST:
             target = True
             done = True
+
+        # 1. 计算距离引导 (Distance Guidance)
+        if not hasattr(self, 'last_distance'):
+            self.last_distance = distance
+
+        # distance_rate > 0 代表靠近目标，< 0 代表远离目标
+        distance_rate = self.last_distance - distance 
+        self.last_distance = distance  # 更新 last_distance 供下一步使用
         
         angular_jerk = abs(action[1] - self.prev_angular)
         self.prev_angular = action[1]
 
-        reward = self.get_reward(target, collision, action, min_laser, angular_jerk)
+        # reward = self.get_reward(target, collision, action, min_laser, angular_jerk)
+        reward = self.get_reward(target, collision, action, min_laser, distance_rate)
 
         robot_state = np.array([distance, theta, action[0], action[1]])
         state = np.concatenate((laser_state, robot_state))
@@ -417,12 +426,12 @@ class AutolaborEnv:
         if action[0] > 0.3 and dist < self.stall_threshold: return True
         return False
 
-    def get_reward(self, target, collision, action, min_laser, angular_jerk):
-        if target: return 100.0
-        elif collision: return -100.0
-        else:
-            r3 = lambda x: 1 - x if x < 1 else 0.0
-            return action[0] / 2 - abs(action[1]) / 2 - r3(min_laser) / 2 + (-0.5 * angular_jerk)
+    # def get_reward(self, target, collision, action, min_laser, angular_jerk):
+    #     if target: return 100.0
+    #     elif collision: return -100.0
+    #     else:
+    #         r3 = lambda x: 1 - x if x < 1 else 0.0
+    #         return action[0] / 2 - abs(action[1]) / 2 - r3(min_laser) / 2 + (-0.5 * angular_jerk)
     
     def _shutdown_handler(self, signum, frame):
         print("\nShutting down gracefully...")
@@ -489,3 +498,52 @@ class AutolaborEnv:
             pass
 
         print("Cleanup complete.")
+
+
+    def get_reward(self, target, collision, action, min_laser, distance_rate):
+        if target:
+            # 到达目标，给大奖
+            return 100.0
+        elif collision:
+            # 撞墙，给大惩罚
+            return -100.0
+        else:
+            # -----------------------------------------------------------
+            # 根据 circuit.world 文件分析调整后的参数
+            # 最窄处路宽约 0.67米，半宽 0.33米。
+            # 因此 safe_distance 必须小于 0.33米，否则机器人无法通过。
+            # -----------------------------------------------------------
+            
+            # 1. 距离奖励 (Distance Reward)
+            # 保持足够的诱惑力，让它想往前走
+            r_distance = 10.0 * distance_rate
+            
+            # 2. 避障惩罚 (Obstacle Penalty) - 核心修改
+            # 设定安全阈值为 0.30米 (30厘米)
+            safe_distance = 0.35
+            
+            r_obstacle = 0.0
+
+            if min_laser < 0.25:
+                r_obstacle = -20.0
+            # if min_laser < safe_distance:
+                # 进入 0.3米 危险区，开始指数级扣分
+                # 离得越近，扣分越狠。
+                # 公式：(安全距 - 当前距) / 安全距
+                # 例如：当前 0.15米 -> (0.3-0.15)/0.3 = 0.5 -> 0.5 * 20 = -10分
+                # r_obstacle = -20.0 * ((safe_distance - min_laser) / safe_distance)
+                
+                # 如果贴脸了 (小于 0.15米)，追加重罚，防止撞转角
+                if min_laser < 0.15:
+                    r_obstacle -= 10.0
+
+            # 3. 速度/动作奖励 (Action Reward) - 解决“犹豫”
+            # 只要它给出了前进速度 (action[0] > 0)，就给一点点微小的奖励
+            # 这能抵消微小的计算误差，鼓励它动起来
+            # r_action = action[0] * 0.2
+            # r_action = -0.05 * abs(action[1])  # 罚角速度
+            
+            # 4. 固定的步数惩罚
+            r_step = -0.1
+            
+            return r_distance + r_obstacle + r_step # + r_action
